@@ -79,4 +79,13 @@ def open_file(event=None):
 
 root.bind("<Control-o>", open_file)
 
+# add four spaces when the Tab key is pressed
+def insert_four_spaces(event):
+    text_box.insert(tk.INSERT, " " * 4)
+    return "break"
+
+
+text_box.bind("<Tab>", insert_four_spaces)
+
+
 root.mainloop()
