@@ -1,34 +1,50 @@
 import tkinter as tk
 from tkinter import filedialog
 import os
+from pygments import lex
+from pygments.lexers import PythonLexer
+from pygments.token import Token
 
 root = tk.Tk()
 root.title("Untitled")
 
-text_box = tk.Text(root, height=5, width=30, undo=True)
-text_box.pack()
+text_box = tk.Text(root, height=5, width=30, undo=True, wrap=tk.WORD)
+text_box.pack_propagate(False)
+text_box.pack(fill=tk.BOTH, expand=True)
 
 current_file = None
 
-# Define a function to highlight all occurrences of the word "text"
-def highlight_text(event=None):
-    search_str = "text"
-    start_index = "1.0"
-    while True:
-        start_index = text_box.search(search_str, start_index, tk.END)
-        if not start_index:
-            break
-        end_index = f"{start_index}+{len(search_str)}c"
-        text_box.tag_add("highlight", start_index, end_index)
-        start_index = end_index
+def highlight_syntax(event=None):
+    # Remove existing tags
+    for tag in text_box.tag_names():
+        if tag != "highlight":
+            text_box.tag_delete(tag)
 
-# Bind the KeyRelease event to the Textbox and call the highlight_text function
-text_box.bind("<KeyRelease>", highlight_text)
+    # Apply syntax highlighting
+    code = text_box.get("1.0", tk.END)
+    for token, value in lex(code, PythonLexer()):
+        tag = str(token)
+        start_index = text_box.search(value, "1.0", stopindex=tk.END)
+        end_index = f"{start_index}+{len(value)}c"
+        text_box.tag_add(tag, start_index, end_index)
+        text_box.tag_configure(tag, foreground=get_color(token))
 
-# Configure the tag to make the text yellow with a red background
-text_box.tag_configure("highlight", foreground="yellow", background="red")
+def get_color(token):
+    if token in Token.Keyword:
+        return "blue"
+    elif token in Token.String:
+        return "green"
+    elif token in Token.Name.Function:
+        return "darkorange"
+    elif token in Token.Name.Namespace:
+        return "purple"
+    elif token in Token.Comment:
+        return "red"
+    else:
+        return "black"
 
-# Define a function to save the text to a file
+text_box.bind("<KeyRelease>", highlight_syntax)
+
 def save_file(event=None):
     global current_file
     if current_file is None:
@@ -38,10 +54,8 @@ def save_file(event=None):
             file.write(text_box.get("1.0", tk.END))
         root.title(os.path.basename(current_file))
 
-# Bind the "ctrl+s" key combination to the save_file function
 root.bind("<Control-s>", save_file)
 
-# Define a function to save the text to a new file
 def save_as_file(event=None):
     global current_file
     current_file = filedialog.asksaveasfilename(defaultextension=".txt")
@@ -50,10 +64,8 @@ def save_as_file(event=None):
             file.write(text_box.get("1.0", tk.END))
         root.title(os.path.basename(current_file))
 
-# Bind the "ctrl+shift+s" key combination to the save_as_file function
 root.bind("<Control-Shift-s>", save_as_file)
 
-# Define a function to open a file
 def open_file(event=None):
     global current_file
     current_file = filedialog.askopenfilename()
@@ -62,9 +74,8 @@ def open_file(event=None):
             text_box.delete("1.0", tk.END)
             text_box.insert("1.0", file.read())
         root.title(os.path.basename(current_file))
-    highlight_text()
+    highlight_syntax()
 
-# Bind the "ctrl+o" key combination to the open_file function
 root.bind("<Control-o>", open_file)
 
 root.mainloop()
