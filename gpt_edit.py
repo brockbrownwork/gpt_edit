@@ -11,6 +11,7 @@ root.title("Untitled")
 text_box = tk.Text(root, height=5, width=30, undo=True, wrap=tk.WORD)
 text_box.pack_propagate(False)
 text_box.pack(fill=tk.BOTH, expand=True)
+text_box.focus_set() # set focus on the text box
 
 current_file = None
 
